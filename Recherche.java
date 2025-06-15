@@ -1,64 +1,152 @@
-package iut.sae.algo.efficacite.etu4;
+package iut.sae.algo.efficacite.etu6;
 
 public class Recherche {
 
     public static int chercheMot(String botteDeFoin, String aiguille) {
-        if (botteDeFoin == null || aiguille == null || botteDeFoin.isEmpty()) return -1;
-
-        // Vérification de la régularité de la matrice
-        int cols = 0, rows = 0;
-        for (int i = 0, tempCols = 0; i < botteDeFoin.length(); i++) {
-            if (botteDeFoin.charAt(i) == '\n') {
-                if (cols == 0) cols = tempCols;
-                else if (tempCols != cols) return -1; // Matrice non rectangulaire
-                rows++;
-                tempCols = 0;
-            } else {
-                tempCols++;
-            }
-        }
-        rows++;
-
-        char[][] matrice = new char[rows][cols];
-        int r = 0, c = 0;
-        for (int i = 0; i < botteDeFoin.length(); i++) {
-            if (botteDeFoin.charAt(i) == '\n') {
-                r++;
-                c = 0;
-            } else {
-                matrice[r][c++] = botteDeFoin.charAt(i);
-            }
+        // Vérification des paramètres nulls
+        if (botteDeFoin == null || aiguille == null) {
+            return -1;
         }
 
-        return compterOccurrences(matrice, aiguille);
-    }
+        // Cas de la chaîne vide
+        if (botteDeFoin.isEmpty()) {
+            return 0;
+        }
 
-    private static int compterOccurrences(char[][] matrice, String aiguille) {
-        int rows = matrice.length, cols = matrice[0].length, count = 0;
+        // Cas de l'aiguille vide
+        if (aiguille.isEmpty()) {
+            return 0;
+        }
+
+        // Calcul des dimensions de la matrice
+        int largeur = calculerLargeurPremiereLigne(botteDeFoin);
+        int hauteur = calculerHauteur(botteDeFoin);
+        
+        // Vérification que la matrice est rectangulaire
+        if (!estMatriceRectangulaire(botteDeFoin, largeur, hauteur)) {
+            return -1;
+        }
+
+        // Vérification si l'aiguille est un palindrome
         boolean estPalindrome = estPalindrome(aiguille);
-        int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
+        
+        int compteur = 0;
+        
+        // Les 8 directions possibles : deltaLigne, deltaColonne
+        int[] deltaLignes = {0, 0, 1, -1, 1, -1, 1, -1};
+        int[] deltaColonnes = {1, -1, 0, 0, 1, -1, -1, 1};
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (matrice[i][j] == aiguille.charAt(0)) {
-                    for (int[] dir : directions) {
-                        if (trouverMot(matrice, aiguille, i, j, dir)) {
-                            count++;
-                        }
+        // Parcourir chaque position de départ
+        for (int ligne = 0; ligne < hauteur; ligne++) {
+            for (int colonne = 0; colonne < largeur; colonne++) {
+                
+                // Tester chaque direction
+                for (int dir = 0; dir < 8; dir++) {
+                    if (rechercheMotDansDirection(botteDeFoin, aiguille, ligne, colonne, 
+                                                deltaLignes[dir], deltaColonnes[dir], largeur)) {
+                        compteur++;
                     }
                 }
             }
         }
 
-        return estPalindrome ? count / 2 : count;
+        // Pour les palindromes et caractères uniques, diviser par 2
+        if (estPalindrome || aiguille.length() == 1) {
+            return compteur / 2;
+        }
+
+        return compteur;
     }
 
-    private static boolean trouverMot(char[][] matrice, String aiguille, int x, int y, int[] direction) {
-        int rows = matrice.length, cols = matrice[0].length, len = aiguille.length();
+    /**
+     * Calcule la largeur de la première ligne
+     */
+    private static int calculerLargeurPremiereLigne(String texte) {
+        int largeur = 0;
+        for (int i = 0; i < texte.length(); i++) {
+            if (texte.charAt(i) == '\n') {
+                break;
+            }
+            largeur++;
+        }
+        return largeur;
+    }
 
-        for (int i = 0; i < len; i++) {
-            int newX = x + i * direction[0], newY = y + i * direction[1];
-            if (newX < 0 || newX >= rows || newY < 0 || newY >= cols || matrice[newX][newY] != aiguille.charAt(i)) {
+    /**
+     * Calcule le nombre de lignes en comptant les '\n'
+     */
+    private static int calculerHauteur(String texte) {
+        int hauteur = 1;
+        for (int i = 0; i < texte.length(); i++) {
+            if (texte.charAt(i) == '\n') {
+                hauteur++;
+            }
+        }
+        return hauteur;
+    }
+
+    /**
+     * Vérifie si la matrice est rectangulaire
+     */
+    private static boolean estMatriceRectangulaire(String texte, int largeurAttendue, int hauteur) {
+        int ligneActuelle = 0;
+        int colonneActuelle = 0;
+        
+        for (int i = 0; i < texte.length(); i++) {
+            char c = texte.charAt(i);
+            
+            if (c == '\n') {
+                if (colonneActuelle != largeurAttendue) {
+                    return false;
+                }
+                ligneActuelle++;
+                colonneActuelle = 0;
+            } else {
+                colonneActuelle++;
+                if (colonneActuelle > largeurAttendue) {
+                    return false;
+                }
+            }
+        }
+        
+        // Vérifier la dernière ligne
+        return colonneActuelle == largeurAttendue;
+    }
+
+    /**
+     * Obtient le caractère à la position (ligne, colonne) dans la chaîne
+     */
+    private static char obtenirCaractere(String texte, int ligne, int colonne, int largeur) {
+        // Position dans la chaîne = ligne * (largeur + 1) + colonne
+        // Le +1 est pour le caractère '\n'
+        int position = ligne * (largeur + 1) + colonne;
+        return texte.charAt(position);
+    }
+
+    /**
+     * Recherche un mot dans une direction spécifique à partir d'une position donnée
+     */
+    private static boolean rechercheMotDansDirection(String matrice, String mot, 
+                                                   int ligneDepart, int colonneDepart, 
+                                                   int deltaLigne, int deltaColonne, int largeur) {
+        int hauteur = calculerHauteur(matrice);
+        
+        // Vérifier si le mot peut tenir dans cette direction
+        int ligneFin = ligneDepart + (mot.length() - 1) * deltaLigne;
+        int colonneFin = colonneDepart + (mot.length() - 1) * deltaColonne;
+        
+        if (ligneFin < 0 || ligneFin >= hauteur || colonneFin < 0 || colonneFin >= largeur) {
+            return false;
+        }
+
+        // Vérifier chaque caractère du mot
+        for (int i = 0; i < mot.length(); i++) {
+            int ligneActuelle = ligneDepart + i * deltaLigne;
+            int colonneActuelle = colonneDepart + i * deltaColonne;
+            
+            char caractereMatrice = obtenirCaractere(matrice, ligneActuelle, colonneActuelle, largeur);
+            
+            if (caractereMatrice != mot.charAt(i)) {
                 return false;
             }
         }
@@ -66,10 +154,15 @@ public class Recherche {
         return true;
     }
 
-    private static boolean estPalindrome(String str) {
-        int left = 0, right = str.length() - 1;
-        while (left < right) {
-            if (str.charAt(left++) != str.charAt(right--)) return false;
+    /**
+     * Vérifie si une chaîne est un palindrome
+     */
+    private static boolean estPalindrome(String chaine) {
+        int longueur = chaine.length();
+        for (int i = 0; i < longueur / 2; i++) {
+            if (chaine.charAt(i) != chaine.charAt(longueur - 1 - i)) {
+                return false;
+            }
         }
         return true;
     }
