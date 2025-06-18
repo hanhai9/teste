@@ -1,169 +1,180 @@
-package iut.sae.algo.efficacite.etu6;
+package iut.sae.algo.efficacite.etu18;
 
 public class Recherche {
 
+    /**
+     * Recherche le nombre d'occurrences d'une aiguille dans une botte de foin.
+     * Algorithme efficace
+     *
+     * @param botteDeFoin la botte de foin sous forme de chaîne de caractères
+     * @param aiguille    l'aiguille à rechercher
+     * @return le nombre d'occurrences de l'aiguille dans la botte de foin,
+     *         ou -1 en cas d'erreur (aiguille ou botteDeFoin null, ou botteDeFoin
+     *         non rectangulaire)
+     */
     public static int chercheMot(String botteDeFoin, String aiguille) {
-        // Vérification des paramètres nulls
+        /* Tests */
+
+        // tests préalables
         if (botteDeFoin == null || aiguille == null) {
             return -1;
         }
 
-        // Cas de la chaîne vide
-        if (botteDeFoin.isEmpty()) {
-            return 0;
+        // calcul du nombre de lignes (nbL) et de colonnes (nbC)
+        int nbL = 1; // au moins une ligne
+        int nbC = 0;
+        int tempColonnes = 0;
+
+        for (int i = 0; i < botteDeFoin.length(); i++) {
+            char c = botteDeFoin.charAt(i);
+            if (c == '\n') {
+                nbL++;
+                if (tempColonnes > nbC) {
+                    nbC = tempColonnes;
+                }
+                tempColonnes = 0;
+            } else {
+                tempColonnes++;
+            }
         }
 
-        // Cas de l'aiguille vide
-        if (aiguille.isEmpty()) {
-            return 0;
+        // dernière ligne (sans \n final)
+        if (tempColonnes > nbC) {
+            nbC = tempColonnes;
         }
 
-        // Calcul des dimensions de la matrice
-        int largeur = calculerLargeurPremiereLigne(botteDeFoin);
-        int hauteur = calculerHauteur(botteDeFoin);
-        
-        // Vérification que la matrice est rectangulaire
-        if (!estMatriceRectangulaire(botteDeFoin, largeur, hauteur)) {
+        // construction de la matrice et vérification de matrice rectangulaire
+        char[][] matrice = new char[nbL][];
+        int ligne = 0;
+        char[] ligneCourante = new char[nbC];
+        int index = 0;
+        boolean estRectangulaire = true;
+
+        for (int i = 0; i < botteDeFoin.length(); i++) {
+            char c = botteDeFoin.charAt(i);
+            if (c == '\n') {
+                if (index != nbC) {
+                    estRectangulaire = false; // si la matrice n'est pas rectangulaire, on sort
+                    break;
+                }
+                matrice[ligne++] = ligneCourante;
+                ligneCourante = new char[nbC];
+                index = 0;
+            } else {
+                if (index < nbC) {
+                    ligneCourante[index++] = c;
+                } else {
+                    estRectangulaire = false; // si la matrice n'est pas rectangulaire, on sort
+                    break;
+                }
+            }
+        }
+
+        // si la matrice n’est pas rectangulaire, traiter comme invalide
+        if (!estRectangulaire) {
             return -1;
         }
 
-        // Vérification si l'aiguille est un palindrome
-        boolean estPalindrome = estPalindrome(aiguille);
-        
-        int compteur = 0;
-        
-        // Les 8 directions possibles : deltaLigne, deltaColonne
-        int[] deltaLignes = {0, 0, 1, -1, 1, -1, 1, -1};
-        int[] deltaColonnes = {1, -1, 0, 0, 1, -1, -1, 1};
+        // ajout de la dernière ligne
+        if (estRectangulaire) {
+            if (index != nbC) {
+                estRectangulaire = false;
+            } else {
+                matrice[ligne] = ligneCourante;
+            }
+        }
 
-        // Parcourir chaque position de départ
-        for (int ligne = 0; ligne < hauteur; ligne++) {
-            for (int colonne = 0; colonne < largeur; colonne++) {
-                
-                // Tester chaque direction
-                for (int dir = 0; dir < 8; dir++) {
-                    if (rechercheMotDansDirection(botteDeFoin, aiguille, ligne, colonne, 
-                                                deltaLignes[dir], deltaColonnes[dir], largeur)) {
-                        compteur++;
+        /* Début de l'algo */
+
+        int nbOccurences = 0;
+        char[] tabAiguille = aiguille.toCharArray();
+        int len = tabAiguille.length;
+
+        // cas particulier : 1 lettre
+        if (len == 1) {
+            for (int l = 0; l < nbL; l++) {
+                for (int c = 0; c < nbC; c++) {
+                    if (matrice[l][c] == tabAiguille[0]) {
+                        nbOccurences++;
                     }
                 }
             }
+            return nbOccurences;
         }
 
-        // Pour les palindromes et caractères uniques, diviser par 2
-        if (estPalindrome || aiguille.length() == 1) {
-            return compteur / 2;
-        }
-
-        return compteur;
-    }
-
-    /**
-     * Calcule la largeur de la première ligne
-     */
-    private static int calculerLargeurPremiereLigne(String texte) {
-        int largeur = 0;
-        for (int i = 0; i < texte.length(); i++) {
-            if (texte.charAt(i) == '\n') {
-                break;
-            }
-            largeur++;
-        }
-        return largeur;
-    }
-
-    /**
-     * Calcule le nombre de lignes en comptant les '\n'
-     */
-    private static int calculerHauteur(String texte) {
-        int hauteur = 1;
-        for (int i = 0; i < texte.length(); i++) {
-            if (texte.charAt(i) == '\n') {
-                hauteur++;
-            }
-        }
-        return hauteur;
-    }
-
-    /**
-     * Vérifie si la matrice est rectangulaire
-     */
-    private static boolean estMatriceRectangulaire(String texte, int largeurAttendue, int hauteur) {
-        int ligneActuelle = 0;
-        int colonneActuelle = 0;
-        
-        for (int i = 0; i < texte.length(); i++) {
-            char c = texte.charAt(i);
-            
-            if (c == '\n') {
-                if (colonneActuelle != largeurAttendue) {
-                    return false;
+        // parcours horizontal
+        for (int l = 0; l < nbL; l++) {
+            for (int c = 0; c <= nbC - len; c++) {
+                boolean normal = true, inverse = true;
+                for (int i = 0; i < len; i++) {
+                    char ch = matrice[l][c + i];
+                    if (ch != tabAiguille[i]) // correspondance normale
+                        normal = false;
+                    if (ch != tabAiguille[len - 1 - i]) // correspondance inverse
+                        inverse = false;
+                    if (!normal && !inverse) // si la sous chaîne ne correspond dans aucun des sens, on sort
+                        break;
                 }
-                ligneActuelle++;
-                colonneActuelle = 0;
-            } else {
-                colonneActuelle++;
-                if (colonneActuelle > largeurAttendue) {
-                    return false;
+                if (normal || inverse)
+                    nbOccurences++;
+            }
+        }
+
+        // parcours vertical
+        for (int c = 0; c < nbC; c++) {
+            for (int l = 0; l <= nbL - len; l++) {
+                boolean normal = true, inverse = true;
+                for (int i = 0; i < len; i++) {
+                    char ch = matrice[l + i][c];
+                    if (ch != tabAiguille[i]) // correspondance normale
+                        normal = false;
+                    if (ch != tabAiguille[len - 1 - i]) // correspondance inverse
+                        inverse = false;
+                    if (!normal && !inverse)
+                        break;
                 }
-            }
-        }
-        
-        // Vérifier la dernière ligne
-        return colonneActuelle == largeurAttendue;
-    }
-
-    /**
-     * Obtient le caractère à la position (ligne, colonne) dans la chaîne
-     */
-    private static char obtenirCaractere(String texte, int ligne, int colonne, int largeur) {
-        // Position dans la chaîne = ligne * (largeur + 1) + colonne
-        // Le +1 est pour le caractère '\n'
-        int position = ligne * (largeur + 1) + colonne;
-        return texte.charAt(position);
-    }
-
-    /**
-     * Recherche un mot dans une direction spécifique à partir d'une position donnée
-     */
-    private static boolean rechercheMotDansDirection(String matrice, String mot, 
-                                                   int ligneDepart, int colonneDepart, 
-                                                   int deltaLigne, int deltaColonne, int largeur) {
-        int hauteur = calculerHauteur(matrice);
-        
-        // Vérifier si le mot peut tenir dans cette direction
-        int ligneFin = ligneDepart + (mot.length() - 1) * deltaLigne;
-        int colonneFin = colonneDepart + (mot.length() - 1) * deltaColonne;
-        
-        if (ligneFin < 0 || ligneFin >= hauteur || colonneFin < 0 || colonneFin >= largeur) {
-            return false;
-        }
-
-        // Vérifier chaque caractère du mot
-        for (int i = 0; i < mot.length(); i++) {
-            int ligneActuelle = ligneDepart + i * deltaLigne;
-            int colonneActuelle = colonneDepart + i * deltaColonne;
-            
-            char caractereMatrice = obtenirCaractere(matrice, ligneActuelle, colonneActuelle, largeur);
-            
-            if (caractereMatrice != mot.charAt(i)) {
-                return false;
+                if (normal || inverse)
+                    nbOccurences++;
             }
         }
 
-        return true;
-    }
-
-    /**
-     * Vérifie si une chaîne est un palindrome
-     */
-    private static boolean estPalindrome(String chaine) {
-        int longueur = chaine.length();
-        for (int i = 0; i < longueur / 2; i++) {
-            if (chaine.charAt(i) != chaine.charAt(longueur - 1 - i)) {
-                return false;
+        // parcours diagonale droite
+        for (int l = 0; l <= nbL - len; l++) {
+            for (int c = 0; c <= nbC - len; c++) {
+                boolean normal = true, inverse = true;
+                for (int i = 0; i < len; i++) {
+                    char ch = matrice[l + i][c + i];
+                    if (ch != tabAiguille[i])
+                        normal = false;
+                    if (ch != tabAiguille[len - 1 - i])
+                        inverse = false;
+                    if (!normal && !inverse)
+                        break;
+                }
+                if (normal || inverse)
+                    nbOccurences++;
             }
         }
-        return true;
+
+        // parcours diagonale gauche
+        for (int l = 0; l <= nbL - len; l++) {
+            for (int c = len - 1; c < nbC; c++) {
+                boolean normal = true, inverse = true;
+                for (int i = 0; i < len; i++) {
+                    char ch = matrice[l + i][c - i];
+                    if (ch != tabAiguille[i])
+                        normal = false;
+                    if (ch != tabAiguille[len - 1 - i])
+                        inverse = false;
+                    if (!normal && !inverse)
+                        break;
+                }
+                if (normal || inverse)
+                    nbOccurences++;
+            }
+        }
+
+        return nbOccurences;
     }
+
 }
