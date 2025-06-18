@@ -1,180 +1,129 @@
-package iut.sae.algo.efficacite.etu18;
+package iut.sae.algo.efficacite.etu41;
 
-public class Recherche {
-
-    /**
-     * Recherche le nombre d'occurrences d'une aiguille dans une botte de foin.
-     * Algorithme efficace
-     *
-     * @param botteDeFoin la botte de foin sous forme de chaîne de caractères
-     * @param aiguille    l'aiguille à rechercher
-     * @return le nombre d'occurrences de l'aiguille dans la botte de foin,
-     *         ou -1 en cas d'erreur (aiguille ou botteDeFoin null, ou botteDeFoin
-     *         non rectangulaire)
-     */
+public class Recherche{
     public static int chercheMot(String botteDeFoin, String aiguille) {
-        /* Tests */
 
-        // tests préalables
-        if (botteDeFoin == null || aiguille == null) {
+        if(aiguille == null || botteDeFoin == null ) {
             return -1;
         }
-
-        // calcul du nombre de lignes (nbL) et de colonnes (nbC)
-        int nbL = 1; // au moins une ligne
-        int nbC = 0;
-        int tempColonnes = 0;
-
-        for (int i = 0; i < botteDeFoin.length(); i++) {
-            char c = botteDeFoin.charAt(i);
-            if (c == '\n') {
-                nbL++;
-                if (tempColonnes > nbC) {
-                    nbC = tempColonnes;
-                }
-                tempColonnes = 0;
+        if (botteDeFoin.length( )==0 || aiguille.length() == 0) {
+            return 0;
+        }
+        
+        
+        int tailleTotale=botteDeFoin.length();
+        int nbColonnes = 0;
+        
+        while(nbColonnes < tailleTotale && botteDeFoin.charAt( nbColonnes) != '\n') {
+            nbColonnes = nbColonnes + 1;
+        }
+        
+        // grille est régulière
+        int nbLignes = 1;
+        int tailleLigneActuelle = 0;
+        for(int i = 0; i < tailleTotale; i++) {
+            if(botteDeFoin.charAt(i) == '\n' ) {
+                if(tailleLigneActuelle !=nbColonnes) return -1;
+                nbLignes = nbLignes + 1;
+                tailleLigneActuelle = 0;
             } else {
-                tempColonnes++;
+                tailleLigneActuelle = tailleLigneActuelle+1;
             }
         }
+        if(tailleLigneActuelle !=nbColonnes)return -1;
+        
+        int cpt=0;
+        int tailleMot=aiguille.length();
+        
+        
 
-        // dernière ligne (sans \n final)
-        if (tempColonnes > nbC) {
-            nbC = tempColonnes;
-        }
-
-        // construction de la matrice et vérification de matrice rectangulaire
-        char[][] matrice = new char[nbL][];
-        int ligne = 0;
-        char[] ligneCourante = new char[nbC];
-        int index = 0;
-        boolean estRectangulaire = true;
-
-        for (int i = 0; i < botteDeFoin.length(); i++) {
-            char c = botteDeFoin.charAt(i);
-            if (c == '\n') {
-                if (index != nbC) {
-                    estRectangulaire = false; // si la matrice n'est pas rectangulaire, on sort
-                    break;
-                }
-                matrice[ligne++] = ligneCourante;
-                ligneCourante = new char[nbC];
-                index = 0;
-            } else {
-                if (index < nbC) {
-                    ligneCourante[index++] = c;
-                } else {
-                    estRectangulaire = false; // si la matrice n'est pas rectangulaire, on sort
-                    break;
-                }
-            }
-        }
-
-        // si la matrice n’est pas rectangulaire, traiter comme invalide
-        if (!estRectangulaire) {
-            return -1;
-        }
-
-        // ajout de la dernière ligne
-        if (estRectangulaire) {
-            if (index != nbC) {
-                estRectangulaire = false;
-            } else {
-                matrice[ligne] = ligneCourante;
-            }
-        }
-
-        /* Début de l'algo */
-
-        int nbOccurences = 0;
-        char[] tabAiguille = aiguille.toCharArray();
-        int len = tabAiguille.length;
-
-        // cas particulier : 1 lettre
-        if (len == 1) {
-            for (int l = 0; l < nbL; l++) {
-                for (int c = 0; c < nbC; c++) {
-                    if (matrice[l][c] == tabAiguille[0]) {
-                        nbOccurences++;
+ 
+        if(tailleMot == 1) {
+            char cible=aiguille.charAt( 0);
+            for(int ligne = 0; ligne < nbLignes; ligne++) {
+                for(int colonne = 0; colonne < nbColonnes; colonne++) {
+                    if(recupCaractere(botteDeFoin, ligne, colonne, nbColonnes) == cible) {
+                        cpt = cpt + 1;
                     }
                 }
             }
-            return nbOccurences;
+            return cpt;
         }
+        
 
-        // parcours horizontal
-        for (int l = 0; l < nbL; l++) {
-            for (int c = 0; c <= nbC - len; c++) {
-                boolean normal = true, inverse = true;
-                for (int i = 0; i < len; i++) {
-                    char ch = matrice[l][c + i];
-                    if (ch != tabAiguille[i]) // correspondance normale
-                        normal = false;
-                    if (ch != tabAiguille[len - 1 - i]) // correspondance inverse
-                        inverse = false;
-                    if (!normal && !inverse) // si la sous chaîne ne correspond dans aucun des sens, on sort
-                        break;
+        boolean estLuDouble=estLuDouble(aiguille);
+        
+        // Pour les mots lus en double
+        int nbDirections;
+        if (estLuDouble) {
+            nbDirections = 4;
+        } else {
+            nbDirections = 8;
+        }
+        
+        // Recherche depuis chaque position
+        for(int ligne = 0; ligne< nbLignes; ligne++) {
+            for(int colonne= 0; colonne<nbColonnes; colonne++) {
+                for(int direction = 0; direction < nbDirections; direction++) {
+                    int dirX, dirY;
+                    
+                    if (direction == 0) {// N
+                        dirX = -1; dirY = 0;
+                    } else if (direction == 1) {// NE
+                        dirX = -1; dirY = 1;
+                    } else if (direction == 2) {// E
+                        dirX = 0; dirY = 1;
+                    } else if (direction == 3) {// SE
+                        dirX = 1; dirY = 1;
+                    } else if (direction == 4) {// S
+                        dirX = 1; dirY = 0;
+                    } else if (direction == 5) { // SW
+                        dirX = 1; dirY = -1;
+                    } else if (direction == 6) {// W
+                        dirX = 0; dirY = -1;
+                    } else {// NW
+                        dirX = -1; dirY = -1;
+                    }
+                    
+                    // limites
+                    int lArrivée =ligne + (tailleMot -1) * dirX;
+                    int cArrivee = colonne +(tailleMot - 1) * dirY;
+                    
+                    if (lArrivée >= 0 &&lArrivée< nbLignes&& cArrivee >= 0 && cArrivee <nbColonnes) {
+
+                        boolean trouve = true;
+                        for (int i = 0; i <tailleMot; i++) {
+                            int ligneActuelle = ligne+ i * dirX;
+                            int colonneActuelle = colonne +i*dirY;
+                            
+                            if (recupCaractere(botteDeFoin,ligneActuelle, colonneActuelle, nbColonnes) != aiguille.charAt(i)) {
+                                trouve = false;
+                                break;  // caractère faux
+                            }
+                        }
+                        if (trouve) {
+                            cpt++;
+                        }
+                    }
                 }
-                if (normal || inverse)
-                    nbOccurences++;
             }
         }
-
-        // parcours vertical
-        for (int c = 0; c < nbC; c++) {
-            for (int l = 0; l <= nbL - len; l++) {
-                boolean normal = true, inverse = true;
-                for (int i = 0; i < len; i++) {
-                    char ch = matrice[l + i][c];
-                    if (ch != tabAiguille[i]) // correspondance normale
-                        normal = false;
-                    if (ch != tabAiguille[len - 1 - i]) // correspondance inverse
-                        inverse = false;
-                    if (!normal && !inverse)
-                        break;
-                }
-                if (normal || inverse)
-                    nbOccurences++;
-            }
-        }
-
-        // parcours diagonale droite
-        for (int l = 0; l <= nbL - len; l++) {
-            for (int c = 0; c <= nbC - len; c++) {
-                boolean normal = true, inverse = true;
-                for (int i = 0; i < len; i++) {
-                    char ch = matrice[l + i][c + i];
-                    if (ch != tabAiguille[i])
-                        normal = false;
-                    if (ch != tabAiguille[len - 1 - i])
-                        inverse = false;
-                    if (!normal && !inverse)
-                        break;
-                }
-                if (normal || inverse)
-                    nbOccurences++;
-            }
-        }
-
-        // parcours diagonale gauche
-        for (int l = 0; l <= nbL - len; l++) {
-            for (int c = len - 1; c < nbC; c++) {
-                boolean normal = true, inverse = true;
-                for (int i = 0; i < len; i++) {
-                    char ch = matrice[l + i][c - i];
-                    if (ch != tabAiguille[i])
-                        normal = false;
-                    if (ch != tabAiguille[len - 1 - i])
-                        inverse = false;
-                    if (!normal && !inverse)
-                        break;
-                }
-                if (normal || inverse)
-                    nbOccurences++;
-            }
-        }
-
-        return nbOccurences;
+        return cpt;
     }
+    
+    private static boolean estLuDouble(String mot) {
+        int longueur=mot.length();
+        for(int i = 0; i < longueur / 2 ; i++) {
+            if(mot.charAt(i)!= mot.charAt(longueur - 1 - i )) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
 
+    private static char recupCaractere(String texte, int ligne, int colonne, int nbColonnes) {
+        return texte.charAt(ligne*(nbColonnes + 1 ) + colonne);
+    }
+    
 }
