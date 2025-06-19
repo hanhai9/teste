@@ -1,240 +1,151 @@
-package iut.sae.algo.simplicite.etu78;
+package iut.sae.algo.simplicite.etu102;
 
 public class Recherche {
+
     public static int chercheMot(String botteDeFoin, String aiguille) {
-        // Gestion des cas particuliers
-        // Test Erreur Aiguille (si aiguille est null ou vide)
-        if (aiguille == null || aiguille.isEmpty()) { 
-            return -1; 
+        
+        // On valide le test : testErreurBotte
+        if (botteDeFoin == null) {
+            return -1;
         }
 
-        // Test Erreur Botte (si botteDeFoin est null)
-        if (botteDeFoin == null) { 
-            return -1; 
+        // On valide le test : testErreurAiguille
+        if (aiguille == null) {
+            return -1;
         }
 
-        // Test Vide (si botteDeFoin est vide)
-        if (botteDeFoin.isEmpty()) { 
-            return 0; 
+        // On valide le test : testVide
+        if (botteDeFoin.isEmpty()) {
+            return 0;
         }
 
-        String[] lignes = botteDeFoin.split("\n");
-        if(lignes.length == 0 || (lignes.length == 1 && lignes[0].isEmpty() && botteDeFoin.equals("\n"))) {
-            return 0; 
-        }
+        String[] lignesTexte = botteDeFoin.split("\n");
 
-        // Vérifier la régularité de la botte de foin (toutes les lignes ont la même longueur)
-        int largeur = lignes[0].length();
-        for (String ligne : lignes) {
-            if (ligne.length() != largeur) {
-                return -1; 
+        // On valide le test : testErreurBotteIrreguliere
+        for (int ligne = 0; ligne < lignesTexte.length - 1; ligne++) {
+            if (lignesTexte[ligne].length() != lignesTexte[ligne + 1].length()) {
+                return -1;
             }
         }
-        
-         // Convertir la botte de foin en une matrice de caractères
-         char[][] matrice = new char[lignes.length][lignes[0].length()];
-         for (int i = 0; i < lignes.length; i++) {
-            matrice[i] = lignes[i].toCharArray();
-         }
- 
-         int hauteurMatrice = matrice.length;
-         int largeurMatrice = matrice[0].length;
-         int occurrences = 0;
 
-        // Si l'aiguille est d'un seul caractère, on compte les occurrences de ce caractère dans la matrice
-         if(aiguille.length()==1){
-                for (int i = 0; i < hauteurMatrice; i++) {
-                    for (int j = 0; j < largeurMatrice; j++) {
-                        if (matrice[i][j] == aiguille.charAt(0)) {
-                            occurrences++;
+        char[][] matrice;
+        try {
+            matrice = conversionMatrice(botteDeFoin);
+        } catch (Exception e) {
+            return -1;
+        }
+
+        int lignes = matrice.length;
+        int colonnes = matrice[0].length;
+        int tailleMot = aiguille.length();
+        int totalOccurrence = 0;
+
+        // Directions : droite, bas, diagonale bas-droite, diagonale bas-gauche
+        int[][] directions = { {0, 1}, {1, 0}, {1, 1}, {1, -1} };
+
+        char[] lettresMot = aiguille.toCharArray();
+        String motInverse = new StringBuilder(aiguille).reverse().toString();
+        boolean verifierInverse = !aiguille.equals(motInverse);
+        char[] lettresMotInverse = motInverse.toCharArray();
+
+        // On valide le test : testAiguilleSimple
+        if (tailleMot == 1) {
+            char caractereRecherche = lettresMot[0];
+            for (int i = 0; i < lignes; i++) {
+                for (int j = 0; j < colonnes; j++) {
+                    if (matrice[i][j] == caractereRecherche) {
+                        totalOccurrence = totalOccurrence + 1;
+                    }
+                }
+            }
+            return totalOccurrence;
+        }
+
+        // On valide les tests : tous ceux avec détection directionnelle (verticale, horizontale, diagonales)
+        for (int ligne = 0; ligne < lignes; ligne++) {
+            for (int colonne = 0; colonne < colonnes; colonne++) {
+                for (int[] direction : directions) {
+                    int dx = direction[0];
+                    int dy = direction[1];
+
+                    if (motCorrespond(matrice, ligne, colonne, dx, dy, lettresMot)) {
+                        totalOccurrence = totalOccurrence + 1;
+                    }
+
+                    if (verifierInverse) {
+                        if (motCorrespond(matrice, ligne, colonne, dx, dy, lettresMotInverse)) {
+                            totalOccurrence = totalOccurrence + 1;
                         }
                     }
                 }
-                return occurrences;
-         }
-
-         // Si l'aiguille est un palindrome ou un duo de caractères identiques
-
-        char[] aiguilleChar = aiguille.toCharArray();
-        boolean estPalindrome = true; // Palindrome à défaut d'autres mots satisfaisant signifiant chaine de caractères identique de la même longueur que la matrice.
-        boolean estChaineIdentique = true;
-
-        
-        if(aiguilleChar.length==largeurMatrice){
-            for (int i = 1; i < aiguilleChar.length; i++) {
-                if (aiguilleChar[i] != aiguilleChar[i-1]) {
-                    estPalindrome = false;
-                    estChaineIdentique = false;
-                    break;
-                }
-            }
-        } else {
-            for (int i = 1; i < aiguilleChar.length; i++){
-                if(aiguilleChar[i] != aiguilleChar[i-1]) {
-                    estChaineIdentique = false; 
-                    break;
-                }
-            }
-        }
-        
-        
-        
-
-         // Parcours de la matrice pour trouver les occurrences de l'aiguille
-
-         
-         // Parcours horizontal de la matrice (gauche à droite)
-        for (int i = 0; i < hauteurMatrice; i++) {
-            for (int j = 0; j <= largeurMatrice - aiguille.length(); j++) {
-                String sousChaine = new String(matrice[i], j, aiguille.length());
-                if (sousChaine.equals(aiguille)) {
-                    occurrences++;
-                }
-            }
-            
-        }
-        if(estChaineIdentique && !estPalindrome){
-            occurrences--;
-        }
-
-        // Parcours horizontal de la matrice (droite à gauche)
-        for (int i = 0; i < hauteurMatrice; i++) {
-            for (int j = largeurMatrice - 1; j >= aiguille.length() - 1; j--) { // Commencer de la fin
-                StringBuilder sousChaine = new StringBuilder();
-                for (int k = 0; k < aiguille.length(); k++) {
-                    sousChaine.append(matrice[i][j - k]); // Déplacement vers la gauche
-                }
-                if (sousChaine.toString().equals(aiguille) && estChaineIdentique==false  ) {
-                    occurrences++;
-                }
             }
         }
 
-        // Parcours vertical de la matrice (haut en bas)
-        for (int j = 0; j < largeurMatrice; j++) {
-            for (int i = 0; i <= hauteurMatrice - aiguille.length(); i++) {
-                StringBuilder sousChaine = new StringBuilder();
-                for (int k = 0; k < aiguille.length(); k++) {
-                    sousChaine.append(matrice[i + k][j]);
-                }
-                if (sousChaine.toString().equals(aiguille)) {
-                    occurrences++;
-                }
-            }
-            
-        }
-        if(estChaineIdentique && !estPalindrome){
-            occurrences--;
-        }
-
-        // Parcours vertical de la matrice (bas en haut)
-        for (int j = 0; j < largeurMatrice; j++) { // Pour chaque colonne
-            for (int i = hauteurMatrice - 1; i >= aiguille.length() - 1; i--) { // On part du bas et on remonte
-                StringBuilder sousChaine = new StringBuilder();
-                for (int k = 0; k < aiguille.length(); k++) {
-                    sousChaine.append(matrice[i - k][j]);
-                }
-                if (sousChaine.toString().equals(aiguille) && estChaineIdentique==false) {
-                    occurrences++;
-                }
-            }
-        }
-
-        // Parcours diagonal de la matrice (haut-gauche vers bas-droite)
-        for (int i = 0; i < hauteurMatrice; i++) {
-            for (int j = 0; j <= largeurMatrice - aiguille.length(); j++) {
-                StringBuilder sousChaine = new StringBuilder();
-                boolean possible = true;   
-                for (int k = 0; k < aiguille.length(); k++) {
-                    int ligneActuelle = i + k;
-                    int colonneActuelle = j + k;
-                    if (ligneActuelle < hauteurMatrice && colonneActuelle < largeurMatrice) {
-                        sousChaine.append(matrice[ligneActuelle][colonneActuelle]);
-                    } else {
-                        possible = false; // on sort de la matrice, donc on stop
-                        break;
-                    }
-                }
-                if (possible && sousChaine.toString().equals(aiguille)) {
-                    occurrences++;
-                }
-            }
-        }
-        if(estChaineIdentique && !estPalindrome){
-            occurrences--;
-        }
-
-        // Parcours diagonal de la matrice (bas-droite vers haut-gauche)
-        for (int i = hauteurMatrice - 1; i >= 0 ; i--) {
-            for (int j = largeurMatrice - 1; j >= aiguille.length() - 1; j--) {
-                StringBuilder sousChaine = new StringBuilder();
-                boolean possible = true;
-                for (int k = 0; k < aiguille.length(); k++) {
-                    int ligneActuelle = i - k;
-                    int colonneActuelle = j - k;
-                    if (ligneActuelle >= 0 && colonneActuelle >= 0) {
-                        sousChaine.append(matrice[ligneActuelle][colonneActuelle]);
-                    } else {
-                        possible = false; // on sort de la matrice, donc on stop
-                        break;
-                    }
-                }
-                if (possible && sousChaine.toString().equals(aiguille) && estChaineIdentique==false) {
-                    occurrences++;
-                }
-            }
-        }
-
-        // Parcours diagonal de la matrice (haut-droite vers bas-gauche)
-        for (int i = 0; i < hauteurMatrice; i++) {
-            for (int j = largeurMatrice - 1; j >=0; j--) {
-                StringBuilder sousChaine = new StringBuilder();
-                boolean possible = true;
-                for (int k = 0; k < aiguille.length(); k++) {
-                    int ligneActuelle = i + k;
-                    int colonneActuelle = j - k;
-                    if (ligneActuelle < hauteurMatrice && colonneActuelle >= 0) {
-                        sousChaine.append(matrice[ligneActuelle][colonneActuelle]);
-                    } else {
-                        possible = false; // on sort de la matrice, donc on stop
-                        break;
-                    }
-                }
-                if (possible && sousChaine.toString().equals(aiguille)) {
-                    occurrences++;
-                }
-            }
-        }
-        if(estChaineIdentique && !estPalindrome){
-            occurrences--;
-        }
-
-        // Parcours diagonal de la matrice (bas-gauche vers haut-droite)
-        for (int i = hauteurMatrice - 1; i >= 0; i--) {
-            for (int j = 0; j <= largeurMatrice - aiguille.length(); j++) {
-                StringBuilder sousChaine = new StringBuilder();
-                boolean possible = true;
-                for (int k = 0; k < aiguille.length(); k++) {
-                    int ligneActuelle = i - k;
-                    int colonneActuelle = j + k;
-                    if (ligneActuelle >= 0 && colonneActuelle < largeurMatrice) {
-                        sousChaine.append(matrice[ligneActuelle][colonneActuelle]);
-                    } else {
-                        possible = false; // on sort de la matrice, donc on stop
-                        break;
-                    }
-                }
-                if (possible && sousChaine.toString().equals(aiguille) && estChaineIdentique==false) {
-                    occurrences++;
-                }
-            }
-        }
-
-        if(estChaineIdentique && !estPalindrome){
-            occurrences-=4;
-        }
-        
-        return occurrences;
+        return totalOccurrence;
     }
-}
 
+    // Cette méthode vérifie si le mot correspond dans une direction donnée
+    private static boolean motCorrespond(char[][] matrice, int ligneDepart, int colonneDepart, int dx, int dy, char[] mot) {
+        int lignes = matrice.length;
+        int colonnes = matrice[0].length;
+
+        for (int k = 0; k < mot.length; k++) {
+            int x = ligneDepart + k * dx;
+            int y = colonneDepart + k * dy;
+
+            if (x < 0) {
+                return false;
+            }
+
+            if (x >= lignes) {
+                return false;
+            }
+
+            if (y < 0) {
+                return false;
+            }
+
+            if (y >= colonnes) {
+                return false;
+            }
+
+            if (matrice[x][y] != mot[k]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+
+    // Transforme un texte multi-lignes en matrice de caractères
+    public static char[][] conversionMatrice(String texte) throws Exception {
+        if (texte == null) {
+            throw new Exception("Texte null dans conversionMatrice");
+        }
+
+        String[] lignes = texte.split("\n");
+        int nbLignes = lignes.length;
+        int nbColonnes = lignes[0].length();
+
+        char[][] matrice = new char[nbLignes][nbColonnes];
+
+        for (int i = 0; i < nbLignes; i++) {
+            for (int j = 0; j < nbColonnes; j++) {
+                char caractere = lignes[i].charAt(j);
+                if (caractere == '.') {
+                    matrice[i][j] = '\0';
+                } else {
+                    matrice[i][j] = caractere;
+                }
+            }
+        }
+
+        return matrice;
+    }
+
+
+
+
+}
