@@ -1,151 +1,78 @@
-package iut.sae.algo.simplicite.etu102;
+package iut.sae.algo.sobriete.etu4;
 
 public class Recherche {
 
     public static int chercheMot(String botteDeFoin, String aiguille) {
-        
-        // On valide le test : testErreurBotte
-        if (botteDeFoin == null) {
-            return -1;
-        }
+        if (botteDeFoin == null || aiguille == null || botteDeFoin.isEmpty()) return -1;
 
-        // On valide le test : testErreurAiguille
-        if (aiguille == null) {
-            return -1;
-        }
-
-        // On valide le test : testVide
-        if (botteDeFoin.isEmpty()) {
-            return 0;
-        }
-
-        String[] lignesTexte = botteDeFoin.split("\n");
-
-        // On valide le test : testErreurBotteIrreguliere
-        for (int ligne = 0; ligne < lignesTexte.length - 1; ligne++) {
-            if (lignesTexte[ligne].length() != lignesTexte[ligne + 1].length()) {
-                return -1;
+        // Calculer la taille de la matrice sans l'initialiser entièrement
+        int cols = 0, rows = 0, tempCols = 0;
+        for (int i = 0; i < botteDeFoin.length(); i++) {
+            if (botteDeFoin.charAt(i) == '\n') {
+                if (cols == 0) cols = tempCols;
+                else if (tempCols != cols) return -1; // Matrice non rectangulaire
+                rows++;
+                tempCols = 0;
+            } else {
+                tempCols++;
             }
         }
+        rows++;
 
-        char[][] matrice;
-        try {
-            matrice = conversionMatrice(botteDeFoin);
-        } catch (Exception e) {
-            return -1;
-        }
+        return compterOccurrences(botteDeFoin, aiguille, rows, cols);
+    }
 
-        int lignes = matrice.length;
-        int colonnes = matrice[0].length;
-        int tailleMot = aiguille.length();
-        int totalOccurrence = 0;
+    private static int compterOccurrences(String botteDeFoin, String aiguille, int rows, int cols) {
+        int count = 0;
+        boolean estPalindrome = estPalindrome(aiguille);
+        int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
 
-        // Directions : droite, bas, diagonale bas-droite, diagonale bas-gauche
-        int[][] directions = { {0, 1}, {1, 0}, {1, 1}, {1, -1} };
-
-        char[] lettresMot = aiguille.toCharArray();
-        String motInverse = new StringBuilder(aiguille).reverse().toString();
-        boolean verifierInverse = !aiguille.equals(motInverse);
-        char[] lettresMotInverse = motInverse.toCharArray();
-
-        // On valide le test : testAiguilleSimple
-        if (tailleMot == 1) {
-            char caractereRecherche = lettresMot[0];
-            for (int i = 0; i < lignes; i++) {
-                for (int j = 0; j < colonnes; j++) {
-                    if (matrice[i][j] == caractereRecherche) {
-                        totalOccurrence = totalOccurrence + 1;
-                    }
-                }
-            }
-            return totalOccurrence;
-        }
-
-        // On valide les tests : tous ceux avec détection directionnelle (verticale, horizontale, diagonales)
-        for (int ligne = 0; ligne < lignes; ligne++) {
-            for (int colonne = 0; colonne < colonnes; colonne++) {
-                for (int[] direction : directions) {
-                    int dx = direction[0];
-                    int dy = direction[1];
-
-                    if (motCorrespond(matrice, ligne, colonne, dx, dy, lettresMot)) {
-                        totalOccurrence = totalOccurrence + 1;
-                    }
-
-                    if (verifierInverse) {
-                        if (motCorrespond(matrice, ligne, colonne, dx, dy, lettresMotInverse)) {
-                            totalOccurrence = totalOccurrence + 1;
+        for (int i = 0, x = 0, y = 0; i < botteDeFoin.length(); i++) {
+            if (botteDeFoin.charAt(i) == '\n') {
+                x++;
+                y = 0;
+            } else {
+                if (botteDeFoin.charAt(i) == aiguille.charAt(0)) {
+                    for (int[] dir : directions) {
+                        if (trouverMot(botteDeFoin, aiguille, x, y, rows, cols, dir)) {
+                            count++;
                         }
                     }
                 }
+                y++;
             }
         }
 
-        return totalOccurrence;
+        return estPalindrome ? count / 2 : count;
     }
 
-    // Cette méthode vérifie si le mot correspond dans une direction donnée
-    private static boolean motCorrespond(char[][] matrice, int ligneDepart, int colonneDepart, int dx, int dy, char[] mot) {
-        int lignes = matrice.length;
-        int colonnes = matrice[0].length;
+    private static boolean trouverMot(String botteDeFoin, String aiguille, int x, int y, int rows, int cols, int[] direction) {
+        int len = aiguille.length();
 
-        for (int k = 0; k < mot.length; k++) {
-            int x = ligneDepart + k * dx;
-            int y = colonneDepart + k * dy;
-
-            if (x < 0) {
-                return false;
-            }
-
-            if (x >= lignes) {
-                return false;
-            }
-
-            if (y < 0) {
-                return false;
-            }
-
-            if (y >= colonnes) {
-                return false;
-            }
-
-            if (matrice[x][y] != mot[k]) {
-                return false;
+        for (int i = 0, xi = x, yi = y, index = 0; i < botteDeFoin.length() && index < len; i++) {
+            if (botteDeFoin.charAt(i) == '\n') {
+                xi++;
+                yi = 0;
+            } else {
+                if (xi == x + i * direction[0] && yi == y + i * direction[1]) {
+                    if (xi < 0 || xi >= rows || yi < 0 || yi >= cols || botteDeFoin.charAt(i) != aiguille.charAt(index)) {
+                        return false;
+                    }
+                    index++;
+                }
+                yi++;
             }
         }
 
         return true;
     }
 
-
-
-    // Transforme un texte multi-lignes en matrice de caractères
-    public static char[][] conversionMatrice(String texte) throws Exception {
-        if (texte == null) {
-            throw new Exception("Texte null dans conversionMatrice");
+    private static boolean estPalindrome(String str) {
+        int left = 0, right = str.length() - 1;
+        while (left < right) {
+            if (str.charAt(left++) != str.charAt(right--)) return false;
         }
-
-        String[] lignes = texte.split("\n");
-        int nbLignes = lignes.length;
-        int nbColonnes = lignes[0].length();
-
-        char[][] matrice = new char[nbLignes][nbColonnes];
-
-        for (int i = 0; i < nbLignes; i++) {
-            for (int j = 0; j < nbColonnes; j++) {
-                char caractere = lignes[i].charAt(j);
-                if (caractere == '.') {
-                    matrice[i][j] = '\0';
-                } else {
-                    matrice[i][j] = caractere;
-                }
-            }
-        }
-
-        return matrice;
+        return true;
     }
-
-
-
-
 }
+
