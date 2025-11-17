@@ -1,0 +1,52 @@
+private void executerPython() throws IOException, InterruptedException {
+    // Charger main.py
+    try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("python/main.py")) {
+        if (inputStream == null) {
+            throw new IOException("Impossible de trouver main.py dans les ressources.");
+        }
+
+        boolean algoSelected = FIFO.isSelected() || PRIORITE.isSelected() || RR.isSelected();
+        if (!algoSelected) return;
+
+        // Préparer le process
+        ProcessBuilder pb = new ProcessBuilder("python", "-");
+        Process process = pb.start();
+
+        // Envoyer le script dans stdin
+        try (OutputStream procIn = process.getOutputStream()) {
+            // Ajouter sys.path
+            Path tempPython = Files.createTempDirectory("python-modules");
+            String setupCode = String.format(
+                "import sys%nsys.path.insert(0, '%s')%n",
+                tempPython.toString().replace("\\", "\\\\")
+            );
+            procIn.write(setupCode.getBytes());
+
+            // Copier main.py
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                procIn.write(buffer, 0, len);
+            }
+            procIn.flush();
+        } // fermeture → Python sait qu’il n’y a plus rien à lire
+
+        // Attendre la fin
+        int exitCode = process.waitFor();
+
+        if (exitCode == 0) {
+            List<Metrique> metriques = lireMetriquesDepuisFichier(config.getFichierMetriques());
+            BarChart<String, Number> chart = creerDiagramme(metriques);
+            javafx.application.Platform.runLater(() -> graphiqueBox.getChildren().setAll(chart));
+        } else {
+            // Lire stderr pour comprendre l’erreur
+            try (InputStream err = process.getErrorStream()) {
+                byte[] buf = new byte[8192];
+                int r;
+                while ((r = err.read(buf)) != -1) {
+                    System.err.write(buf, 0, r);
+                }
+            }
+        }
+    }
+}
