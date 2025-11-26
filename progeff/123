@@ -1,1 +1,89 @@
 
+def fifo(processus, nb_cpu=1, ram_totale=123):
+    """Ordonnancement FIFO avec respect strict de l'arrivée."""
+    processus = sorted(processus, key=lambda p: p["arrivee"])
+    temps_cpu = [0] * nb_cpu
+    res = []
+
+    for p in processus:
+        # chaque CPU ne peut démarrer qu'après l'arrivée du processus
+        dispo = [max(temps_cpu[i], p["arrivee"]) for i in range(nb_cpu)]
+        cpu = min(range(nb_cpu), key=lambda i: dispo[i])
+        debut = dispo[cpu]
+        if p["ram"] <= ram_totale:
+            fin = debut + p["duree"]
+            res.append((p["id"], debut, fin, cpu))
+            temps_cpu[cpu] = fin
+        else:
+            print(f"Processus {p['id']} ignoré (RAM insuffisante)")
+    return res
+
+
+def round_robin(processus, quantum, nb_cpu=1, ram_totale=123):
+    """Round Robin avec respect strict de l'arrivée."""
+    processus = sorted(processus, key=lambda p: p["arrivee"])
+    duree_restante = {p["id"]: p["duree"] for p in processus}
+    temps_cpu = [0] * nb_cpu
+    res = []
+    file = processus.copy()
+
+    while duree_restante:
+        for p in file.copy():
+            pid = p["id"]
+            if pid not in duree_restante:
+                continue
+            # CPU ne peut démarrer qu'après arrivée
+            dispo = [max(temps_cpu[i], p["arrivee"]) for i in range(nb_cpu)]
+            cpu = min(range(nb_cpu), key=lambda i: dispo[i])
+            debut = dispo[cpu]
+            if p["ram"] <= ram_totale:
+                d = min(quantum, duree_restante[pid])
+                fin = debut + d
+                res.append((pid, debut, fin, cpu))
+                temps_cpu[cpu] = fin
+                duree_restante[pid] -= d
+                if duree_restante[pid] <= 0:
+                    del duree_restante[pid]
+            else:
+                print(f"Processus {pid} ignoré (RAM insuffisante)")
+                del duree_restante[pid]
+    return res
+
+
+def priorite(processus, nb_cpu=1, ram_totale=123):
+    """Ordonnancement par priorité avec respect strict de l'arrivée."""
+    processus = sorted(processus, key=lambda p: p["arrivee"])
+    temps_cpu = [0] * nb_cpu
+    res = []
+    fich_attente = []
+
+    # horloge globale
+    time = 0
+    index = 0
+
+    while index < len(processus) or fich_attente:
+        # ajouter les processus arrivés dans la file
+        while index < len(processus) and processus[index]["arrivee"] <= time:
+            fich_attente.append(processus[index])
+            index += 1
+
+        if not fich_attente:
+            # avancer le temps jusqu'au prochain processus
+            time = processus[index]["arrivee"]
+            continue
+
+        # choisir le processus avec la plus haute priorité
+        max_p = max(fich_attente, key=lambda p: p["priorite"])
+        fich_attente.remove(max_p)
+
+        dispo = [max(temps_cpu[i], max_p["arrivee"]) for i in range(nb_cpu)]
+        cpu = min(range(nb_cpu), key=lambda i: dispo[i])
+        debut = dispo[cpu]
+        if max_p["ram"] <= ram_totale:
+            fin = debut + max_p["duree"]
+            res.append((max_p["id"], debut, fin, cpu))
+            temps_cpu[cpu] = fin
+            time = min(temps_cpu)  # avancer l'horloge
+        else:
+            print(f"Processus {max_p['id']} ignoré (RAM insuffisante)")
+    return res
