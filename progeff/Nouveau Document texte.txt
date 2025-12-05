@@ -1,0 +1,136 @@
+<?php
+session_start();
+?>
+
+<!-- partie contenu principal -->
+<main role="main" class="col-md-9 ms-sm-auto col-lg-10 px-4">
+
+<?php
+	$accueilDef = "";
+	
+	if (isset($_GET['msgErreur']) ) {
+		echo "<br> </br>";
+		echo "<center><h2>".htmlentities($_GET['msgErreur'])."</h2></center>" ; }
+	else { 
+		echo "<br> </br>";
+		echo "<h2> <center>";
+		echo $accueilDef;
+		echo "<br>"; 
+		echo "</br>";
+		echo "</center> </h2>";
+	}
+
+?>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Arcania</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- CSS de cette page -->
+	<link rel="stylesheet" href="CSS/formulaire.css">
+
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <img src="images/Arcania.png" alt="Logo Arcania" class="logo">
+                <h1>Bienvenue</h1>
+                <p>Connectez-vous pour accéder à votre compte</p>
+            </div>
+
+            <!-- Form -->
+            <div class="login-form">
+                <!-- Tabs -->
+                <div class="form-tabs">
+                    <button class="tab-btn active">Connexion</button>
+                    <button class="tab-btn">Inscription</button>
+                </div>
+
+                <!-- Login Form -->
+                <form class="signin-form" method="POST" action="TraitConnexion.php">
+                    <div class="form-group">
+                        <label for="login">Identifiant</label>
+                        <input type="text" id="login" name="login" placeholder="Identifiant" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Mot de passe</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" placeholder="Mot de passe" required>
+                            <button type="button" class="toggle-password">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember" name="SeSouvenir">
+                            <label for="remember">Se souvenir de moi</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" name="Envoi" class="btn-submit">Se connecter</button>
+                </form>
+
+                <!-- Register Form (hidden)
+                <form class="register-form" style="display: none;" action="javascript:void(0);">
+                    <div class="form-group">
+                        <label for="reg-name">Nom complet</label>
+                        <input type="text" id="reg-name" name="reg-name" placeholder="Votre nom" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-email">Identifiant</label>
+                        <input type="text" id="reg-email" name="reg-email" placeholder="identifiant" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-password">Mot de passe</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="reg-password" name="reg-password" placeholder="mot de passe" required>
+                            <button type="button" class="toggle-password">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-confirm">Confirmer le mot de passe</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="reg-confirm" name="reg-confirm" placeholder="mot de passe" required>
+                            <button type="button" class="toggle-password">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </form> -->
+            </div>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p style="margin-top: 0.5rem;">
+                    <a href="index.php">← Retour à l'accueil</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+
+<br>
+<a href="Compte.php">chemin rapide vers compte
+
+</html>
